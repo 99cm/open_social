@@ -1,14 +1,20 @@
-module SpreeSocial
+module OpenSocial
   module Generators
     class InstallGenerator < Rails::Generators::Base
+      source_root File.dirname(__FILE__) + "/templates"
+
       class_option :auto_run_migrations, type: :boolean, default: false
 
       def add_stylesheets
-        inject_into_file 'vendor/assets/stylesheets/spree/frontend/all.css', " *= require spree/frontend/spree_social\n", before: /\*\//, verbose: true
+        inject_into_file 'vendor/assets/stylesheets/spree/frontend/all.css', " *= require spree/frontend/open_social\n", before: /\*\//, verbose: true
       end
 
       def add_migrations
-        run 'bundle exec rake railties:install:migrations FROM=spree_social'
+        run 'bundle exec rake railties:install:migrations FROM=open_social'
+      end
+
+      def copy_initializer
+        template "config/initializers/open_social.rb"
       end
 
       def run_migrations

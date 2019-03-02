@@ -1,53 +1,36 @@
-# Spree Social
+# Open Social
 
-[![Build Status](https://travis-ci.org/spree-contrib/spree_social.svg?branch=master)](https://travis-ci.org/spree-contrib/spree_social)
-[![Code Climate](https://codeclimate.com/github/spree-contrib/spree_social/badges/gpa.svg)](https://codeclimate.com/github/spree-contrib/spree_social)
-[![Reviewed by Hound](https://img.shields.io/badge/Reviewed_by-Hound-8E64B0.svg)](https://houndci.com)
-
-Core for all social media related functionality for Spree.
-The Spree Social gem handles authorization, account creation and association through social media sources such as Twitter and Facebook.
-This gem is beta at best and should be treated as such.
-Features and code base will change rapidly as this is under active development.
-Use with caution.
+Add social login support to [Open][1] store. Open Social handles authorization, account
+creation and association through third-party services. Currently Twitter,
+Facebook, Github, Google OAuth2, and Amazon are available out of the box.
 
 ---
 
-## Setup for Production
+## Installation
 
 1. Add this extension to your Gemfile with this line:
 
-  #### Spree >= 3.1
-
   ```ruby
-  gem 'spree_social', github: 'spree-contrib/spree_social'
+  gem 'open_social', github: '99cm/open_social'
   ```
+Then run:
 
-  #### Spree 3.0 and Spree 2.x
-
-  ```ruby
-  gem 'spree_social', github: 'spree-contrib/spree_social', branch: 'X-X-stable'
-  ```
-
-  The `branch` option is important: it must match the version of Spree you're using.
-  For example, use `3-0-stable` if you're using Spree `3-0-stable` or any `3.0.x` version.
-
-2. Install the gem using Bundler:
   ```ruby
   bundle install
   ```
 
-3. Copy & run migrations
+2. Copy & run migrations
   ```ruby
-  bundle exec rails g spree_social:install
+  bundle exec rails g open_social:install
+  bundle exec rake db:migrate
   ```
 
-4. Restart your server
+3. Restart your server
 
   If your server was running, restart it so that it can find the assets properly.
 
 
-
-Preference(optional): By default url will be `/users/auth/:provider`. If you wish to modify the url to: `/member/auth/:provider`, `/profile/auth/:provider`, or `/auth/:provider` then you can do this accordingly in your **config/initializers/spree.rb** file as described below:
+Preference(optional): By default the login path will be `/users/auth/:provider`. If you wish to modify the path to: `/member/auth/:provider`, `/profile/auth/:provider`, or `/auth/:provider` then you can do this accordingly in your **config/initializers/open_social.rb** file as described below:
 
 ```ruby
 Spree::SocialConfig[:path_prefix] = 'member'  # for /member/auth/:provider
@@ -57,7 +40,7 @@ Spree::SocialConfig[:path_prefix] = ''        # for /auth/:provider
 
 ---
 
-## Spree Setup to Utilize OAuth Sources
+## Utilize OAuth Sources
 
 Login as an admin user and navigate to Configuration > Social Authentication Methods
 
@@ -82,11 +65,16 @@ end
 
 ---
 
-## Setup the Applications at the Respective Sources
+## Registering Your Application
 
-OAuth Applications @ Facebook, Twitter, Google and / or Github are supported out of the box but you will need to setup applications are each respective site as follows for public use and for development.
+Facebook, Twitter, Github, Google OAuth2, and Amazon are supported out of the
+box but, you will need to register your application with each of the sites you
+want to use.
 
-> All URLs must be in the form of domain.tld you may add a port as well for development
+When setting up development applications, keep in mind that most services do
+not support `localhost` for your URL/domain. You will need to us a regular
+domain (i.e.  `domain.tld`, `hostname.local`) or an IP addresses (`127.0.0.1`).
+Make sure you specifity the right IP address.
 
 ### Facebook
 
@@ -138,27 +126,40 @@ OAuth Applications @ Facebook, Twitter, Google and / or Github are supported out
 2. Name the Application, select "Web Application" as a type.
 3. Under "Authorized redirect URIs", add your site (example: http://localhost:3000/users/auth/google_oauth2/callback)
 
-> More info: https://developers.google.com/identity/protocols/OAuth2
+> More info: [https://developers.google.com/identity/protocols/OAuth2](https://developers.google.com/identity/protocols/OAuth2)
 
 ## Adding other OAuth sources
 
-It is easy to add any OAuth source, given there is an OmniAuth strategy gem for it (and if not, you can easily [write one by yourself](https://github.com/intridea/omniauth/wiki/Strategy-Contribution-Guide). For instance, if you want to add authorization via LinkedIn, the steps will be:
+It is easy to add any OAuth source, given there is an [OmniAuth strategy gem][13] for it (and if not, you can easily [write one by yourself](https://github.com/intridea/omniauth/wiki/Strategy-Contribution-Guide).
+
+#### LinkedIn Example
 
 1, Add `gem "omniauth-linkedin"` to your Gemfile, run `bundle install`.
 
-2, In an initializer file, e.g. `config/initializers/devise.rb`, add and init a new provider for SpreeSocial:
+2. In `config/initializers/open_social.rb` add and initialize a new provider
+   for OpenSocial:
 
-**Optional**: If you want to skip the sign up phase where the user has to provide an email and a password, add a third parameter to the provider entry and the Spree user will be created directly using the email field in the [Auth Hash Schema](https://github.com/intridea/omniauth/wiki/Auth-Hash-Schema):
+   ```ruby
 
-```ruby
-SpreeSocial::OAUTH_PROVIDERS << ['LinkedIn', 'linkedin', 'true']
-SpreeSocial.init_provider('linkedin')
-```
+     config.providers = {
+       # The configuration key has to match your omniauth strategy.
+       linkedin: {
+         api_key: ENV['LINKEDIN_API_KEY'],
+         api_secret: ENV['LINKEDIN_API_SECRET'],
+       },
+       # More providers here
+   ```
+3. Activate your provider as usual.
+4. Do **one** of the following:
 
-3, Activate your provider as usual (via initializer or admin interface).
-
-4, Override `spree/users/social` view to render OAuth links in preferred way for a new one to be displayed. Or alternatively, include to your CSS a definition for `.icon-spree-linkedin-circled` and an embedded icon font for LinkedIn from [fontello.com](http://fontello.com/) (the way existing icons for Facebook, Twitter, etc are implemented). You can also override CSS classes for other providers, `.icon-spree-<provider>-circled`, to use different font icons or classic background images, without having to override views.
-
+   - Override the `spree/users/social` view to render OAuth links to display
+     your LinkedIn link.
+   - Include in your CSS a definition for `.icon-spree-linkedin-circled` and an
+     embedded icon font for LinkedIn from [Fontello][14] (the way existing
+     icons for Facebook, Twitter, etc are implemented). You can also override
+     CSS classes for other providers, `.icon-spree-<provider>-circled`, to use
+     different font icons or classic background images, without having to
+     override views.
 ---
 
 ## Contributing
@@ -167,17 +168,19 @@ See corresponding [guidelines][11].
 
 ---
 
-Copyright (c) 2010-2015 [John Dyer][7] and [contributors][8], released under the [New BSD License][9]
+Copyright (c) 2019 [Leo][7] and [contributors][8], released under the [New BSD License][9]
 
-[1]: https://github.com/spree/spree
+[1]: https://github.com/99cm/open
 [2]: https://developers.facebook.com/apps/?action=create
 [3]: https://apps.twitter.com/app/new
 [4]: https://github.com/settings/applications/new
 [5]: http://www.fsf.org/licensing/essays/free-sw.html
-[6]: https://github.com/spree-contrib/spree_social/issues
-[7]: https://github.com/LBRapid
-[8]: https://github.com/spree-contrib/spree_social/graphs/contributors
-[9]: https://github.com/spree-contrib/spree_social/blob/master/LICENSE.md
+[6]: https://github.com/99cm/open_social/issues
+[7]: https://github.com/99cm
+[8]: https://github.com/99cm/open_social/graphs/contributors
+[9]: https://github.com/99cm/open_social/blob/master/LICENSE.md
 [10]: https://login.amazon.com/manageApps
-[11]: https://github.com/spree-contrib/spree_social/blob/master/CONTRIBUTING.md
+[11]: https://github.com/99cm/open_social/blob/master/CONTRIBUTING.md
 [12]: https://console.developers.google.com
+[13]: https://github.com/intridea/omniauth/wiki/List-of-Strategies
+[14]: http://fontello.com/

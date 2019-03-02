@@ -1,12 +1,11 @@
 <div id="social-signin-links">
   <% if (!spree_current_user || !spree_current_user.user_authentications) && Spree::AuthenticationMethod.active_authentication_methods? %>
-    <h4><%= Spree.t(:sign_in_through_one_of_these_services) %></h4>
+    <h3><%= I18n.t('spree.sign_in_through_one_of_these_services') %></h3>
   <% end %>
 
   <% Spree::AuthenticationMethod.available_for(@spree_user).each do |method| %>
-    <%= link_to(content_tag(:i, '', class: "icon-spree-#{method.provider.to_url}-circled"),
-          path_for_omniauth(@spree_user, method.provider),
-          id: method.provider.to_url,
-          title: Spree.t(:sign_in_with, provider: method.provider)) if method.active %>
+    <%= link_to(content_tag(:i, '', class: "icon-spree-#{method.provider.dasherize}-circled"),
+          spree.send("spree_user_#{method.provider}_omniauth_authorize_path"),
+          title: I18n.t('spree.sign_in_with', provider: method.provider)) if method.active %>
   <% end %>
 </div>

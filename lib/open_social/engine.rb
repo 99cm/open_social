@@ -1,29 +1,21 @@
-module SpreeSocial
-  OAUTH_PROVIDERS = [
-    %w(Facebook facebook true),
-    %w(Twitter twitter false),
-    %w(Github github false),
-    %w(Google google_oauth2 true),
-    %w(Amazon amazon false)
-  ]
-
+module OpenSocial
   class Engine < Rails::Engine
-    engine_name 'spree_social'
+    engine_name 'open_social'
 
     config.autoload_paths += %W(#{config.root}/lib)
 
-    # Resolves omniauth_callback error on development env
-    # See https://github.com/spree-contrib/spree_social/issues/193#issuecomment-296585601
-    if Rails::VERSION::MAJOR == 5
-      initializer 'main_app.auto_load' do |app|
-        Rails.application.reloader.to_run(:before) do
-          Rails.application.reloader.prepare!
-        end
-      end
+    initializer 'open_social.environment', before: 'spree.environment' do
+      Spree::SocialConfig = Spree::SocialConfiguration.new
     end
 
-    initializer 'spree_social.environment', before: 'spree.environment' do
-      Spree::SocialConfig = Spree::SocialConfiguration.new
+    initializer 'open_social.decorate_spree_user' do
+      next unless Rails.application.respond_to?(:reloader)
+
+      Rails.application.reloader.after_class_unload do
+        # Reload and decorate the spree user class immediately after it is
+        # unloaded so that it is available to devise when loading routes
+        load File.join(__dir__, '../../app/models/spree/user_decorator.rb')
+      end
     end
 
     def self.activate
@@ -35,23 +27,14 @@ module SpreeSocial
     config.to_prepare(&method(:activate).to_proc)
   end
 
-  # Setup all OAuth providers
-  def self.init_provider(provider)
-    begin
-      ActiveRecord::Base.connection_pool.with_connection(&:active?)
-    rescue
-      return
-    end
+  def self.configured_providers
+    Spree::SocialConfig.providers.keys.map(&:to_s)
+  end
 
-    return unless ActiveRecord::Base.connection.data_source_exists?('spree_authentication_methods')
-    key, secret = nil
-    Spree::AuthenticationMethod.where(environment: ::Rails.env).each do |auth_method|
-      next unless auth_method.provider == provider
-      key = auth_method.api_key
-      secret = auth_method.api_secret
-      Rails.logger.info("[Spree Social] Loading #{auth_method.provider.capitalize} as authentication source")
+  def self.init_providers
+    Spree::SocialConfig.providers.each do |provider, credentials|
+      setup_key_for(provider, credentials[:api_key], credentials[:api_secret])
     end
-    setup_key_for(provider.to_sym, key, secret)
   end
 
   def self.setup_key_for(provider, key, secret)
@@ -72,6 +55,7 @@ module OmniAuth
                             'mobile'
       def request_phase
         options[:scope] ||= 'email'
+        options[:info_fields] ||= 'email'
         options[:display] = mobile_request? ? 'touch' : 'page'
         super
       end

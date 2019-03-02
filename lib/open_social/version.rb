@@ -1,4 +1,4 @@
-module SpreeSocial
+module OpenSocial
   module_function
 
   # Returns the version of the currently loaded SpreeSocial as a
@@ -8,9 +8,9 @@ module SpreeSocial
   end
 
   module VERSION
-    MAJOR = 3
-    MINOR = 3
-    TINY  = 2
+    MAJOR = 2
+    MINOR = 2
+    TINY  = 0
 
     STRING = [MAJOR, MINOR, TINY].compact.join('.')
   end

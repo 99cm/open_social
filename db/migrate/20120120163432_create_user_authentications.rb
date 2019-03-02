@@ -6,5 +6,8 @@ class CreateUserAuthentications < SpreeExtension::Migration[4.2]
       t.string :uid
       t.timestamps null: false
     end
+
+    add_index :spree_user_authentications, [:uid, :provider], unique: true
+    add_index :spree_user_authentications, :user_id
   end
 end

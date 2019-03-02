@@ -1,15 +1,17 @@
 RSpec.describe Spree::AuthenticationMethod, type: :model do
-  let(:user) { create(:user) }
-
-  describe '#available_for' do
-    before do
-      Spree::AuthenticationMethod.create!(provider: 'facebook', environment: Rails.env, api_key: 'test', api_secret: 'test')
+  describe '.provider_options' do
+    let(:expected_provider_options) do
+      [
+        %w(Amazon amazon),
+        %w(Facebook facebook),
+        %w(Twitter twitter),
+        %w(Github github),
+        %w(Google google_oauth2)
+      ]
     end
 
-    context 'without users' do
-      it 'returns empty association' do
-        expect(described_class.available_for(nil)).to eq Spree::AuthenticationMethod.none
-      end
-    end
+    subject { described_class.provider_options }
+
+    it { is_expected.to match_array(expected_provider_options) }
   end
 end

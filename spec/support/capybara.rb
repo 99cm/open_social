@@ -6,13 +6,5 @@ require "selenium-webdriver"
 RSpec.configure do |config|
   config.include Rack::Test::Methods, type: :requests
 
-  Capybara.register_driver :chrome do |app|
-    Capybara::Selenium::Driver.new app,
-      browser: :chrome,
-      options: Selenium::WebDriver::Chrome::Options.new(args: %w[disable-popup-blocking headless disable-gpu window-size=1920,1080])
-  end
-
-  Capybara.javascript_driver = :chrome
-
-  Capybara.save_and_open_page_path = ENV['CIRCLE_ARTIFACTS'] if ENV['CIRCLE_ARTIFACTS']
+  Capybara.javascript_driver = :selenium_chrome_headless
 end
